@@ -1,0 +1,208 @@
+<div class="app-shell">
+  <header class="app-header" [class.embedded]="!standaloneMode">
+    <div class="header-inner">
+      @if (standaloneMode) { <div class="brand"><span class="brand-mark"
+          aria-hidden="true">✿</span><strong>拾光追蹤</strong></div> }
+      <nav class="section-tabs" aria-label="功能切換">
+        <button type="button" [class.active]="page() === 'overview'"
+          [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')">總覽</button>
+        <button type="button" [class.active]="page() === 'tracking'"
+          [attr.aria-current]="page() === 'tracking' ? 'page' : null" (click)="navigate('tracking')">缺項追蹤</button>
+        <button type="button" [class.active]="page() === 'nearby'"
+          [attr.aria-current]="page() === 'nearby' ? 'page' : null" (click)="navigate('nearby')">附近線索</button>
+      </nav>
+      @if (standaloneMode) { <span class="mock-pill">MOCK 預覽</span> }
+    </div>
+  </header>
+
+  <main class="main-content">
+    @if (page() === 'overview') {
+    <section class="page-heading" aria-labelledby="overview-title">
+      <div><span class="eyebrow">TRACKING OVERVIEW</span>
+        <h1 id="overview-title">追蹤總覽</h1>
+        <p>先看缺什麼，再決定下一步。</p>
+      </div>
+      <span class="heading-note">資料儲存在此瀏覽器 · 示範版</span>
+    </section>
+
+    <section class="metrics" aria-label="追蹤統計">
+      <div class="metric metric-primary"><span>目前缺少</span><strong>{{ store.missingCount() }}<small>項</small></strong>
+        <p>已確認需要尋找</p>
+      </div>
+      <div class="metric"><span>待尋找系列</span><strong>{{ store.trackedSeriesCount() }}<small>個</small></strong>
+        <p>可用於篩選附近線索</p>
+      </div>
+      <div class="metric"><span>已收集</span><strong>{{ store.collectedCount() }}<small>項</small></strong>
+        <p>確認項目的 {{ completionPercent() }}%</p>
+      </div>
+      <div class="metric"><span>尚未盤點</span><strong>{{ store.unknownCount() }}<small>項</small></strong>
+        <p>不計入缺項</p>
+      </div>
+    </section>
+
+    <div class="dashboard-grid">
+      <section class="panel" aria-labelledby="missing-series-title">
+        <div class="panel-heading">
+          <div><span class="eyebrow">TO FIND</span>
+            <h2 id="missing-series-title">正在追蹤的系列</h2>
+          </div><button type="button" class="text-button" (click)="navigate('tracking')">查看全部 ↗</button>
+        </div>
+        <p class="panel-intro">選擇系列，查看右側附近的示意線索。</p>
+        @for (item of prioritySeries(); track item.id) {
+        <button type="button" class="series-row" [class.current]="activeOverviewSeriesId() === item.id"
+          [attr.aria-pressed]="activeOverviewSeriesId() === item.id" (click)="selectOverviewSeries(item)"><span
+            class="series-icon" [class]="'series-icon ' + item.tint">{{ item.icon }}</span><span
+            class="series-row-name"><strong>{{ item.name }}</strong><small>{{ item.location }}</small></span><span
+            class="missing-pill">缺 {{ store.seriesMissingCount(item.id) }}</span><span
+            class="row-arrow">›</span></button>
+        } @empty { <div class="empty-inline">目前沒有已標記的缺項。可到追蹤頁開始盤點。</div> }
+      </section>
+
+      <section class="panel radar-panel" aria-labelledby="radar-title">
+        <div class="panel-heading">
+          <div><span class="eyebrow">NEARBY RADAR</span>
+            <h2 id="radar-title">{{ overviewSeries().name }}附近線索</h2>
+          </div><span class="radar-count">{{ overviewSpots().length }} 個示意點</span>
+        </div>
+        <p class="panel-intro">此系列有 {{ store.seriesMissingCount(activeOverviewSeriesId()) }} 個缺項。地點僅提供系列線索，不保證款式或顏色。</p>
+        <div class="radar-list">
+          @for (spot of overviewSpots(); track spot.id) {
+          <article class="radar-row"><span class="radar-marker" aria-hidden="true">⌖</span>
+            <div class="radar-copy"><strong>{{ spot.name }}</strong><small>{{ spot.area }} · 約 {{ spot.distanceKm }}
+                公里</small></div><a [href]="spot.sourceUrl" target="_blank" rel="noopener noreferrer"
+              [attr.aria-label]="'查看' + spot.name + '的資料來源'">來源 ↗</a>
+          </article>
+          } @empty { <div class="radar-empty">目前沒有這個系列的示意點。可到附近線索頁查看其他系列。</div> }
+        </div>
+        <p class="radar-footnote">示範位置：臺北市中心 · 尚未使用 GPS</p>
+      </section>
+    </div>
+
+    <section class="nearby-banner" aria-label="查詢附近線索">
+      <div class="nearby-banner-art" aria-hidden="true"><span></span><span></span><i>⌖</i></div>
+      <div class="nearby-banner-copy"><span class="eyebrow">YOUR NEXT STOP</span>
+        <h2>讓缺項帶你找下一站</h2>
+        <p>結合正在追蹤的系列，快速查看附近的純點線索。</p>
+      </div><button type="button" (click)="navigate('nearby')">查詢附近線索 <span aria-hidden="true">↗</span></button>
+    </section>
+    }
+
+    @if (page() === 'tracking') {
+    <section class="page-heading" aria-labelledby="tracking-title">
+      <div><span class="eyebrow">MISSING ITEMS</span>
+        <h1 id="tracking-title">缺項追蹤</h1>
+        <p>搜尋系列、挑選款式與顏色；辨識結果也會自動更新在這裡。</p>
+      </div>
+      <span class="heading-note">{{ store.missingCount() }} 項待尋找</span>
+    </section>
+
+    <div class="recognition-strip"><span class="strip-icon" aria-hidden="true">✧</span>
+      <p><strong>辨識完成後自動更新。</strong> 不需逐筆確認，若有辨識錯誤可在下方直接修正。</p>@if (store.nextRecognition()) { <button type="button"
+        (click)="simulateRecognition()">模擬辨識 ↗</button> } @else { <span class="strip-done">示範辨識已完成</span> }
+    </div>
+
+    <div class="tracking-layout">
+      <section class="series-panel" aria-label="飾品系列">
+        <label class="search-field"><span aria-hidden="true">⌕</span><input type="search" placeholder="搜尋系列或款式"
+            [value]="search()" (input)="setSearch($event)" aria-label="搜尋系列或款式"></label>
+        <div class="filter-row" role="group" aria-label="篩選狀態"><button type="button"
+            [class.selected]="trackingFilter() === 'missing'"
+            (click)="trackingFilter.set('missing')">有缺項</button><button type="button"
+            [class.selected]="trackingFilter() === 'all'" (click)="trackingFilter.set('all')">全部系列</button><button
+            type="button" [class.selected]="trackingFilter() === 'collected'"
+            (click)="trackingFilter.set('collected')">已收集</button></div>
+        <div class="series-list">
+          @for (item of visibleSeries(); track item.id) {
+          <button type="button" class="series-row" [class.current]="selectedSeriesId() === item.id"
+            (click)="chooseSeries(item)"><span class="series-icon" [class]="'series-icon ' + item.tint">{{ item.icon
+              }}</span><span class="series-row-name"><strong>{{ item.name }}</strong><small>{{ item.variants.length }}
+                種款式 · {{ item.location }}</small></span><span class="missing-pill"
+              [class.zero]="store.seriesMissingCount(item.id) === 0">缺 {{ store.seriesMissingCount(item.id)
+              }}</span></button>
+          } @empty { <div class="empty-inline">沒有符合的系列，請調整搜尋或篩選條件。</div> }
+        </div>
+        <p class="small-note">目前是示範圖鑑，系列與款式尚未完整。</p>
+      </section>
+
+      <section id="series-detail" class="detail-panel" aria-labelledby="detail-title">
+        <div class="detail-heading" [class]="'detail-heading ' + selectedSeries().tint"><span class="series-icon"
+            [class]="'series-icon ' + selectedSeries().tint">{{ selectedSeries().icon }}</span>
+          <div><span class="eyebrow">SELECTED SERIES</span>
+            <h2 id="detail-title">{{ selectedSeries().name }}</h2>
+            <p>{{ selectedSeries().location }} · 缺 {{ store.seriesMissingCount(selectedSeriesId()) }} 項</p>
+          </div>
+        </div>
+        <div class="detail-body">
+          <h3>款式</h3>
+          <div class="variant-tabs" role="group" aria-label="選擇飾品款式">@for (variant of selectedSeries().variants; track
+            variant.id) { <button type="button" [class.active]="selectedVariantId() === variant.id"
+              (click)="chooseVariant(variant.id)">{{ variant.name }}</button> }</div>
+          <h3 class="color-heading">皮克敏顏色</h3>
+          <div class="color-grid" role="group" aria-label="選擇皮克敏顏色">
+            @for (color of colors; track color.id) {
+            <button type="button" class="color-tile" [class.active]="selectedColorId() === color.id"
+              [attr.aria-pressed]="selectedColorId() === color.id" (click)="selectedColorId.set(color.id)"><span
+                class="color-dot" [style.background]="color.hex"></span><strong>{{ color.label }}</strong><small
+                [class]="'status-' + store.status(selectedSeriesId(), selectedVariantId(), color.id)">{{
+                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'collected' ? '已收集' :
+                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'missing' ? '缺少' :
+                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'ignored' ? '不追蹤' : '未確認'
+                }}</small></button>
+            }
+          </div>
+          <div class="status-editor">
+            <div><span>修正狀態</span><strong>{{ selectedSeries().name }}・{{ selectedVariant().name }}・{{
+                selectedColor().label }}</strong></div>
+            <div class="status-actions"><button type="button"
+                [class.active-collected]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'collected'"
+                (click)="setStatus('collected')">已收集</button><button type="button"
+                [class.active-missing]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'missing'"
+                (click)="setStatus('missing')">缺少</button><button type="button"
+                [class.active-muted]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'ignored'"
+                (click)="setStatus('ignored')">不追蹤</button><button type="button"
+                [class.active-muted]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'unknown'"
+                (click)="setStatus('unknown')">未確認</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    }
+
+    @if (page() === 'nearby') {
+    <section class="page-heading" aria-labelledby="nearby-title">
+      <div><span class="eyebrow">NEARBY CLUES</span>
+        <h1 id="nearby-title">附近線索</h1>
+        <p>只顯示與已標記缺項相關的地點系列。</p>
+      </div><span class="heading-note">{{ store.missingCount() }} 項待尋找</span>
+    </section>
+    <div class="location-bar"><label for="area-select">示範區域</label><select id="area-select" [value]="selectedArea()"
+        (change)="setArea($event)">
+        <option value="中正區">臺北市・中正區</option>
+        <option value="中山區">臺北市・中山區</option>
+      </select><span>{{ nearbySpots().length }} 個相關示意點</span></div>
+    <div class="mock-info">地點與距離均為 mock 示意；目前沒有取得 GPS，也不代表真實純點。正式版會依當下位置查詢。</div>
+    <div class="spot-list">
+      @for (spot of nearbySpots(); track spot.id) {
+      <article class="spot-card"><span class="spot-icon" aria-hidden="true">⌖</span>
+        <div class="spot-copy">
+          <div class="spot-meta"><span>{{ seriesName(spot.seriesId) }}</span><small>示意資料</small></div>
+          <h2>{{ spot.name }}</h2>
+          <p>{{ spot.area }} · 約 {{ spot.distanceKm }} 公里</p><small>此系列有 {{ store.seriesMissingCount(spot.seriesId) }}
+            個缺項；地點不保證產出指定顏色或款式。</small>
+        </div><a [href]="spot.sourceUrl" target="_blank" rel="noopener noreferrer">查看資料來源 ↗</a>
+      </article>
+      } @empty { <div class="empty-state"><strong>這個區域暫無相關示意點</strong>
+        <p>可切換區域，或先標記其他缺項。</p><button type="button" class="outline-button"
+          (click)="navigate('tracking')">前往缺項追蹤</button>
+      </div> }
+    </div>
+    }
+  </main>
+
+  <footer class="app-footer"><span>MOCK PREVIEW · {{ series.length }} 個示範系列</span>
+    <div><span>目前資料只存在此瀏覽器</span><button type="button" class="reset-button" (click)="resetPreview()">{{ resetArmed() ?
+        '確認重設示範資料' : '重設示範資料' }}</button>@if (resetArmed()) { <button type="button" class="cancel-button"
+        (click)="resetArmed.set(false)">取消</button> }</div>
+  </footer>
+  @if (notice()) { <div class="toast" role="status">{{ notice() }}</div> }
+</div>
