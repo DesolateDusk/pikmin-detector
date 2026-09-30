@@ -32,7 +32,10 @@ function loadPreview(): SavedPreview {
       if (typeof parsed === 'object' && parsed !== null && 'statuses' in parsed && 'appliedResultIds' in parsed) {
         const saved = parsed as SavedPreview;
         if (saved.statuses && typeof saved.statuses === 'object' && Array.isArray(saved.appliedResultIds)) {
-          return saved;
+          const statuses = Object.fromEntries(
+            Object.entries(saved.statuses).map(([id, status]) => [id, status === 'collected' ? 'collected' : 'missing']),
+          ) as Record<string, CollectionStatus>;
+          return { statuses, appliedResultIds: saved.appliedResultIds };
         }
       }
     }
@@ -50,8 +53,8 @@ export class MockTrackerStore {
 
   readonly collectedCount = computed(() => this.count('collected'));
   readonly missingCount = computed(() => this.count('missing'));
-  readonly unknownCount = computed(() => this.count('unknown'));
   readonly trackedSeriesCount = computed(() => SERIES.filter((series) => this.seriesMissingCount(series.id) > 0).length);
+  readonly completedSeriesCount = computed(() => SERIES.filter((series) => this.seriesMissingCount(series.id) === 0).length);
   readonly recognitionHistory = computed(() =>
     RECOGNITION_RESULTS.filter((result) => this.appliedResultIds().includes(result.id)).slice().reverse(),
   );
@@ -60,7 +63,7 @@ export class MockTrackerStore {
   );
 
   status(seriesId: string, variantId: string, color: string): CollectionStatus {
-    return this.statuses()[`${seriesId}/${variantId}/${color}`] ?? 'unknown';
+    return this.statuses()[`${seriesId}/${variantId}/${color}`] ?? 'missing';
   }
 
   seriesMissingCount(seriesId: string): number {

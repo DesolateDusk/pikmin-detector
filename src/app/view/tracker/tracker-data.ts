@@ -1,5 +1,5 @@
 export type PikminColor = 'red' | 'yellow' | 'blue' | 'purple' | 'white' | 'rock' | 'winged' | 'ice';
-export type CollectionStatus = 'unknown' | 'collected' | 'missing' | 'ignored';
+export type CollectionStatus = 'collected' | 'missing';
 export type PageId = 'overview' | 'tracking' | 'nearby';
 
 export interface ColorOption {

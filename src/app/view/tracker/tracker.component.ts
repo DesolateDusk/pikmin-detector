@@ -45,7 +45,7 @@ export class TrackerComponent {
     return SERIES.filter((item) => {
       const matchesTerm = !term || `${item.name} ${item.location} ${item.variants.map((variant) => variant.name).join(' ')}`.toLocaleLowerCase().includes(term);
       const filter = this.trackingFilter();
-      const matchesStatus = filter === 'all' || (filter === 'missing' ? this.store.seriesMissingCount(item.id) > 0 : this.store.seriesCollectedCount(item.id) > 0);
+      const matchesStatus = filter === 'all' || (filter === 'missing' ? this.store.seriesMissingCount(item.id) > 0 : this.store.seriesMissingCount(item.id) === 0);
       return matchesTerm && matchesStatus;
     });
   });

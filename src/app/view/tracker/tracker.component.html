@@ -27,16 +27,16 @@
 
     <section class="metrics" aria-label="追蹤統計">
       <div class="metric metric-primary"><span>目前缺少</span><strong>{{ store.missingCount() }}<small>項</small></strong>
-        <p>已確認需要尋找</p>
+        <p>尚未標記為已收集</p>
       </div>
       <div class="metric"><span>待尋找系列</span><strong>{{ store.trackedSeriesCount() }}<small>個</small></strong>
         <p>可用於篩選附近線索</p>
       </div>
       <div class="metric"><span>已收集</span><strong>{{ store.collectedCount() }}<small>項</small></strong>
-        <p>確認項目的 {{ completionPercent() }}%</p>
+        <p>全部項目的 {{ completionPercent() }}%</p>
       </div>
-      <div class="metric"><span>尚未盤點</span><strong>{{ store.unknownCount() }}<small>項</small></strong>
-        <p>不計入缺項</p>
+      <div class="metric"><span>已完成系列</span><strong>{{ store.completedSeriesCount() }}<small>個</small></strong>
+        <p>系列下所有項目已收集</p>
       </div>
     </section>
 
@@ -55,7 +55,7 @@
             class="series-row-name"><strong>{{ item.name }}</strong><small>{{ item.location }}</small></span><span
             class="missing-pill">缺 {{ store.seriesMissingCount(item.id) }}</span><span
             class="row-arrow">›</span></button>
-        } @empty { <div class="empty-inline">目前沒有已標記的缺項。可到追蹤頁開始盤點。</div> }
+        } @empty { <div class="empty-inline">目前所有示範項目皆已收集。</div> }
       </section>
 
       <section class="panel radar-panel" aria-labelledby="radar-title">
@@ -110,7 +110,7 @@
             (click)="trackingFilter.set('missing')">有缺項</button><button type="button"
             [class.selected]="trackingFilter() === 'all'" (click)="trackingFilter.set('all')">全部系列</button><button
             type="button" [class.selected]="trackingFilter() === 'collected'"
-            (click)="trackingFilter.set('collected')">已收集</button></div>
+            (click)="trackingFilter.set('collected')">已完成系列</button></div>
         <div class="series-list">
           @for (item of visibleSeries(); track item.id) {
           <button type="button" class="series-row" [class.current]="selectedSeriesId() === item.id"
@@ -144,9 +144,7 @@
               [attr.aria-pressed]="selectedColorId() === color.id" (click)="selectedColorId.set(color.id)"><span
                 class="color-dot" [style.background]="color.hex"></span><strong>{{ color.label }}</strong><small
                 [class]="'status-' + store.status(selectedSeriesId(), selectedVariantId(), color.id)">{{
-                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'collected' ? '已收集' :
-                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'missing' ? '缺少' :
-                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'ignored' ? '不追蹤' : '未確認'
+                store.status(selectedSeriesId(), selectedVariantId(), color.id) === 'collected' ? '已收集' : '未收集'
                 }}</small></button>
             }
           </div>
@@ -157,11 +155,7 @@
                 [class.active-collected]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'collected'"
                 (click)="setStatus('collected')">已收集</button><button type="button"
                 [class.active-missing]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'missing'"
-                (click)="setStatus('missing')">缺少</button><button type="button"
-                [class.active-muted]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'ignored'"
-                (click)="setStatus('ignored')">不追蹤</button><button type="button"
-                [class.active-muted]="store.status(selectedSeriesId(), selectedVariantId(), selectedColorId()) === 'unknown'"
-                (click)="setStatus('unknown')">未確認</button></div>
+                (click)="setStatus('missing')">未收集</button></div>
           </div>
         </div>
       </section>
