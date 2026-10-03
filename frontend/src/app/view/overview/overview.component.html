@@ -1,0 +1,30 @@
+<app-page-heading headingId="overview-title" eyebrow="TRACKING OVERVIEW" title="追蹤總覽" description="上傳圖鑑截圖，整理目前的收集狀態。" note="紀錄儲存在此瀏覽器" />
+<section class="metrics" aria-label="追蹤統計">
+  <div class="metric metric-primary"><span>目前缺少</span><strong>{{ store.missingCount() }}<small>項</small></strong><p>已辨識格位中的缺項</p></div>
+  <div class="metric"><span>待尋找系列</span><strong>{{ store.trackedSeriesCount() }}<small>個</small></strong><p>可用於篩選附近純點</p></div>
+  <div class="metric"><span>已收集</span><strong>{{ store.collectedCount() }}<small>項</small></strong><p>已辨識格位的 {{ completionPercent() }}%</p></div>
+  <div class="metric"><span>已辨識系列</span><strong>{{ store.series().length }}<small>個</small></strong><p>尚未上傳的系列不計入</p></div>
+</section>
+<div class="dashboard-grid">
+  <section class="panel" aria-labelledby="missing-series-title">
+    <div class="panel-heading"><div><span class="eyebrow">TO FIND</span><h2 id="missing-series-title">正在追蹤的系列</h2></div><button type="button" class="text-button" (click)="navigate.emit('tracking')">查看全部 ↗</button></div>
+    <p class="panel-intro">選擇系列，查看已查得的附近純點。</p>
+    @for (item of prioritySeries(); track item.decorTypeKey) {
+      <app-series-row [series]="item" [missingCount]="store.seriesMissingCount(item.decorTypeKey)" [selected]="overviewSeries()?.decorTypeKey === item.decorTypeKey" [showArrow]="true" (selectSeries)="selectOverviewSeries(item)" />
+    } @empty { <div class="empty-inline">尚無缺項。請先上傳圖鑑截圖，或查看已辨識的系列。</div> }
+  </section>
+  <section class="panel radar-panel" aria-labelledby="radar-title">
+    <div class="panel-heading"><div><span class="eyebrow">NEARBY RADAR</span><h2 id="radar-title">{{ overviewSeries()?.decorTypeName ?? '附近' }}純點線索</h2></div><span class="radar-count">{{ overviewSpots().length }} 個點</span></div>
+    <p class="panel-intro">地點只提供系列線索，不保證特定款式或顏色。需先查詢 GPS 才會顯示結果。</p>
+    <div class="radar-list">
+      @for (spot of overviewSpots(); track spot.id) {
+        <article class="radar-row"><span class="radar-marker" aria-hidden="true">⌖</span><div class="radar-copy"><strong>{{ spot.name }}</strong><small>{{ spotArea(spot) }} · {{ distanceKm(spot) }}</small></div><a [href]="directionsUrl(spot)" target="_blank" rel="noopener noreferrer" [attr.aria-label]="'導航至' + spot.name">導航 ↗</a></article>
+      } @empty { <div class="radar-empty">目前沒有此系列的附近結果。可到附近線索頁使用 GPS 查詢。</div> }
+    </div>
+  </section>
+</div>
+<section class="nearby-banner" aria-label="查詢附近線索">
+  <div class="nearby-banner-art" aria-hidden="true"><span></span><span></span><i>⌖</i></div>
+  <div class="nearby-banner-copy"><span class="eyebrow">YOUR NEXT STOP</span><h2>讓缺項帶你找下一站</h2><p>查詢 5 公里內與缺項系列相關的純點。</p></div>
+  <button type="button" (click)="navigate.emit('nearby')">查詢附近線索 <span aria-hidden="true">↗</span></button>
+</section>

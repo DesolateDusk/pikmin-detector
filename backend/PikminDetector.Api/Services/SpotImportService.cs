@@ -1,11 +1,12 @@
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.View;
 using PikminDetector.Api.Repositories;
 
 namespace PikminDetector.Api.Services;
 
-public sealed class SpotImportService(TreelazySource source, SpotImportRepository repository, ILogger<SpotImportService> logger)
+public sealed class SpotImportService(ITreelazySource source, ISpotImportRepository repository, ILogger<SpotImportService> logger) : ISpotImportService
 {
-    public async Task<SpotImportVM> ImportAsync(SpotImportRequest request)
+    public async Task<SpotImportVM> ImportAsync(SpotImportInput request)
     {
         var scope = TreelazyCatalog.Validate(request);
         var added = 0;

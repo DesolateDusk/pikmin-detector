@@ -1,6 +1,7 @@
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.DbEntity;
 using Microsoft.AspNetCore.Http;
-using PikminDetector.Api.Common.Errors;
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Lib.CustomException;
 
 namespace PikminDetector.Api.Services;
 
@@ -35,22 +36,22 @@ public static class TreelazyCatalog
             ["MY"] = ("malaysia", true)
         };
 
-    public static SpotImportScope Validate(SpotImportRequest request)
+    public static SpotImportScope Validate(SpotImportInput request)
     {
         var country = request.Country;
         var city = request.City;
         var area = request.Area;
         if (country is null || (country != "TW" && !Countries.ContainsKey(country)))
-            throw new AppException(StatusCodes.Status400BadRequest, "Unsupported country code.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "Unsupported country code.");
         if (city == "" || area == "" || (area is not null && city is null))
-            throw new AppException(StatusCodes.Status400BadRequest, "A valid city is required when area is provided.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "A valid city is required when area is provided.");
         if (country == "TW")
         {
             if (city is not null && !TaiwanCities.ContainsKey(city))
-                throw new AppException(StatusCodes.Status400BadRequest, "Unknown Taiwan city.");
+                throw new CommonException(StatusCodes.Status400BadRequest, "Unknown Taiwan city.");
         }
         else if (area is not null || (city is not null && !Countries[country].HasCities))
-            throw new AppException(StatusCodes.Status400BadRequest, "This country does not support the requested city or area scope.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "This country does not support the requested city or area scope.");
         return new SpotImportScope(country, city, area);
     }
 }

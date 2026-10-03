@@ -1,0 +1,21 @@
+<div class="app-shell">
+  <header class="app-header" [class.embedded]="!showBrand">
+    <div class="header-inner">
+      @if (showBrand) { <div class="brand"><span class="brand-mark" aria-hidden="true">✿</span><strong>拾光追蹤</strong></div> }
+      <nav class="section-tabs" aria-label="功能切換">
+        <button type="button" [class.active]="page() === 'overview'" [attr.aria-current]="page() === 'overview' ? 'page' : null" (click)="navigate('overview')">總覽</button>
+        <button type="button" [class.active]="page() === 'tracking'" [attr.aria-current]="page() === 'tracking' ? 'page' : null" (click)="navigate('tracking')">缺項追蹤</button>
+        <button type="button" [class.active]="page() === 'nearby'" [attr.aria-current]="page() === 'nearby' ? 'page' : null" (click)="navigate('nearby')">附近線索</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <app-overview [hidden]="page() !== 'overview'" (navigate)="navigate($event)" />
+    <app-tracking [hidden]="page() !== 'tracking'" (notice)="flash($event)" />
+    <app-nearby [hidden]="page() !== 'nearby'" (navigate)="navigate($event)" />
+  </main>
+
+  <footer class="app-footer"><span>{{ store.series().length }} 個已辨識系列 · 紀錄儲存在此瀏覽器</span><div><button type="button" class="reset-button" (click)="resetRecords()">{{ resetArmed() ? '確認清除全部紀錄' : '清除本機紀錄' }}</button>@if (resetArmed()) { <button type="button" class="cancel-button" (click)="resetArmed.set(false)">取消</button> }</div></footer>
+  @if (notice()) { <div class="toast" role="status">{{ notice() }}</div> }
+</div>

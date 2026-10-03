@@ -1,5 +1,6 @@
-using PikminDetector.Api.Common.Errors;
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Models.View;
+using PikminDetector.Api.Models.DbEntity;
+using PikminDetector.Api.Lib.CustomException;
 using PikminDetector.Api.Repositories;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -21,11 +22,11 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
     public async Task<RecognitionVM> RecognizeAsync(Stream image, string contentType, long length)
     {
         if (length == 0)
-            throw new AppException(StatusCodes.Status400BadRequest, "image must not be empty.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "image must not be empty.");
         if (length < 0 || length > MaximumImageBytes)
-            throw new AppException(StatusCodes.Status413PayloadTooLarge, "image must be at most 10 MB.");
+            throw new CommonException(StatusCodes.Status413PayloadTooLarge, "image must be at most 10 MB.");
         if (contentType is not ("image/png" or "image/jpeg"))
-            throw new AppException(StatusCodes.Status415UnsupportedMediaType, "Only PNG and JPEG images are accepted.");
+            throw new CommonException(StatusCodes.Status415UnsupportedMediaType, "Only PNG and JPEG images are accepted.");
 
         Image<Rgb24> screenshot;
         try
@@ -34,17 +35,17 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
         }
         catch (UnknownImageFormatException)
         {
-            throw new AppException(StatusCodes.Status400BadRequest, "image is not a readable PNG or JPEG.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "image is not a readable PNG or JPEG.");
         }
         catch (InvalidImageContentException)
         {
-            throw new AppException(StatusCodes.Status400BadRequest, "image is invalid.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "image is invalid.");
         }
 
         using (screenshot)
         {
             if (screenshot.Width < 700 || screenshot.Height < screenshot.Width * 1.8)
-                throw new AppException(StatusCodes.Status422UnprocessableEntity, "A portrait collection screenshot is required.");
+                throw new CommonException(StatusCodes.Status422UnprocessableEntity, "A portrait collection screenshot is required.");
             if (screenshot.Width != ReferenceWidth)
                 screenshot.Mutate(operation => operation.Resize(ReferenceWidth, 0));
 

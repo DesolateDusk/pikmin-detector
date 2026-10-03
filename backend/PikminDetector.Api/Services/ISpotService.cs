@@ -1,4 +1,5 @@
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.View;
 
 namespace PikminDetector.Api.Services;
 

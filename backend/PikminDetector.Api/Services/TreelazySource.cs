@@ -1,11 +1,11 @@
+using PikminDetector.Api.Models.DbEntity;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using PikminDetector.Api.Models;
 
 namespace PikminDetector.Api.Services;
 
-public sealed class TreelazySource(HttpClient http)
+public sealed class TreelazySource(HttpClient http) : ITreelazySource
 {
     private static readonly IReadOnlyDictionary<string, string> DecorKeys =
         new Dictionary<string, string>(StringComparer.Ordinal)

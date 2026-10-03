@@ -1,6 +1,6 @@
+using PikminDetector.Api.Models.View;
 using Microsoft.AspNetCore.Mvc;
-using PikminDetector.Api.Common.Errors;
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Lib.CustomException;
 using PikminDetector.Api.Services;
 
 namespace PikminDetector.Api.Controllers;
@@ -23,7 +23,7 @@ public sealed class RecognitionsController : ControllerBase
     {
         if (image is null)
         {
-            throw new AppException(StatusCodes.Status400BadRequest, "image is required.");
+            throw new CommonException(StatusCodes.Status400BadRequest, "image is required.");
         }
 
         await using var imageStream = image.OpenReadStream();

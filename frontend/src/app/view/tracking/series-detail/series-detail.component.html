@@ -1,0 +1,27 @@
+<section id="series-detail" class="detail-panel" aria-labelledby="detail-title">
+    @if (series(); as series) {
+      <div class="detail-heading"><span class="series-icon">✿</span><div><span class="eyebrow">SELECTED SERIES</span><h2 id="detail-title">{{ series.decorTypeName }}</h2><p>缺 {{ missingCount() }} 項</p></div></div>
+      <div class="detail-body">
+        <h3>款式</h3>
+        <div class="variant-tabs" role="group" aria-label="選擇飾品款式">
+          @for (costume of series.costumes; track costume.costumeTypeKey) { <button type="button" [class.active]="selectedCostume()?.costumeTypeKey === costume.costumeTypeKey" (click)="costumeSelected.emit(costume.costumeTypeKey)">{{ costume.costumeTypeName }}</button> }
+        </div>
+        @if (selectedCostume(); as costume) {
+          <h3 class="color-heading">皮克敏種類</h3>
+          <div class="color-grid" role="group" aria-label="選擇皮克敏種類">
+            @for (color of colors(); track color.id) {
+              <button type="button" class="color-tile" [class.active]="selectedColor()?.id === color.id" [attr.aria-pressed]="selectedColor()?.id === color.id" (click)="colorSelected.emit(color.id)">
+                <span class="color-dot" [style.background]="color.hex"></span><strong>{{ color.label }}</strong><small [class]="'status-' + status(costume.costumeTypeKey, color.id)">{{ status(costume.costumeTypeKey, color.id) === 'collected' ? '已收集' : '缺少' }}</small>
+              </button>
+            }
+          </div>
+          @if (selectedColor(); as color) {
+            <div class="status-editor"><div><span>修正狀態</span><strong>{{ series.decorTypeName }}・{{ costume.costumeTypeName }}・{{ color.label }}</strong></div>
+              <div class="status-actions"><button type="button" [class.active-collected]="status(costume.costumeTypeKey, color.id) === 'collected'" (click)="statusChanged.emit('collected')">已收集</button><button type="button" [class.active-missing]="status(costume.costumeTypeKey, color.id) === 'missing'" (click)="statusChanged.emit('missing')">缺少</button></div>
+            </div>
+          }
+        }
+      </div>
+    } @else { <div class="empty-state"><strong id="detail-title">尚無辨識紀錄</strong><p>上傳完整圖鑑卡片後，可在這裡查看已收集與缺少的項目。</p></div> }
+  </section>
+

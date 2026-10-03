@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -9,9 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.89" />
     <PackageReference Include="Npgsql" Version="10.0.0" />
-    <PackageReference Include="Serilog" Version="4.4.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.11" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
@@ -22,13 +20,8 @@
     <Content Update="appsettings*.example.json" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
-  <Target Name="ConfigureLocalSettings">
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/appsettings.example.json"
-          DestinationFiles="$(MSBuildProjectDirectory)/appsettings.json"
-          Condition="!Exists('$(MSBuildProjectDirectory)/appsettings.json')" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)/appsettings.Development.example.json"
-          DestinationFiles="$(MSBuildProjectDirectory)/appsettings.Development.json"
-          Condition="!Exists('$(MSBuildProjectDirectory)/appsettings.Development.json')" />
-  </Target>
-
+  <ItemGroup>
+    <Content Include="tessdata/*.traineddata" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="RecognitionTemplates/cafe.png" />
+  </ItemGroup>
 </Project>

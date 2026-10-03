@@ -9,7 +9,8 @@
     "start": "ng serve",
     "build": "node scripts/configure-production.mjs && ng build",
     "build:pages": "node scripts/configure-production.mjs && ng build --base-href /pikmin-detector/ --output-path dist/pikmin-detector-pages",
-    "test": "ng test"
+    "test:unit": "node --test src/app/core/tracker/*.test.mjs",
+    "test": "npm run test:configuration && npm run test:unit"
   },
   "dependencies": {
     "@angular-architects/native-federation": "22.1.0",

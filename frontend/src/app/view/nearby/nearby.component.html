@@ -1,0 +1,11 @@
+<app-page-heading headingId="nearby-title" eyebrow="NEARBY CLUES" title="附近線索" description="依目前 GPS 查詢 5 公里內，與已確認缺項系列相關的純點。" [note]="store.missingCount() + ' 項待尋找'" />
+<div class="location-bar"><span>按下查詢後會將當次座標傳送至 API；不儲存位置紀錄。</span><button type="button" class="primary-button" [disabled]="nearby.loading() || store.missingCount() === 0" (click)="nearby.findNearby()">{{ nearby.loading() ? '查詢中…' : '使用目前位置查詢' }}</button></div>
+@if (nearby.message()) { <p class="feedback-message" role="status">{{ nearby.message() }}</p> }
+<p class="mock-info">純點僅提供系列線索，不保證特定款式或顏色；請以遊戲內結果為準。</p>
+<div class="spot-list">
+  @for (spot of nearby.matchingSpots(); track spot.id) {
+    <article class="spot-card"><span class="spot-icon" aria-hidden="true">⌖</span><div class="spot-copy"><div class="spot-meta"><span>{{ matchingDecorNames(spot) }}</span><small>5 公里內</small></div><h2>{{ spot.name }}</h2><p>{{ spotArea(spot) }} · {{ distanceKm(spot) }}</p><small>來源資料為純點候選，實際遊戲結果可能不同。</small></div><a [href]="directionsUrl(spot)" target="_blank" rel="noopener noreferrer" [attr.aria-label]="'導航至' + spot.name">導航 ↗</a></article>
+  } @empty {
+    <div class="empty-state"><strong>{{ store.missingCount() === 0 ? '目前沒有已確認缺項' : nearby.requested() ? '附近沒有相符的純點' : '尚未查詢位置' }}</strong><p>{{ store.missingCount() === 0 ? '請先上傳圖鑑截圖。' : nearby.requested() ? '可稍後重新定位查詢。' : '按上方按鈕取得當前位置。' }}</p>@if (store.missingCount() === 0) { <button type="button" class="outline-button" (click)="navigate.emit('tracking')">前往缺項追蹤</button> }</div>
+  }
+</div>

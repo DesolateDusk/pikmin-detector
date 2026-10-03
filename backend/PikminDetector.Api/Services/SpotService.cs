@@ -1,4 +1,6 @@
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.View;
+using PikminDetector.Api.Models.DbEntity;
 using PikminDetector.Api.Repositories;
 
 namespace PikminDetector.Api.Services;
@@ -7,25 +9,13 @@ public sealed class SpotService(ISpotRepository repository) : ISpotService
 {
     public async Task<IReadOnlyList<SpotVM>> SearchAreaAsync(AreaSpotInput query)
     {
-        var filter = new AreaSpotFilter(
-            query.Country!,
-            query.City,
-            query.Area,
-            query.DecorTypeKey,
-            query.Limit ?? 50);
-        var spots = await repository.SearchAreaAsync(filter);
+        var spots = await repository.SearchAreaAsync(query);
         return spots.Select(ToVM).ToArray();
     }
 
     public async Task<IReadOnlyList<SpotVM>> FindNearbyAsync(NearbySpotInput query)
     {
-        var filter = new NearbySpotFilter(
-            query.Latitude!.Value,
-            query.Longitude!.Value,
-            query.RadiusMeters ?? 3000,
-            query.DecorTypeKey,
-            query.Limit ?? 50);
-        var spots = await repository.FindNearbyAsync(filter);
+        var spots = await repository.FindNearbyAsync(query);
         return spots.Select(ToVM).ToArray();
     }
 

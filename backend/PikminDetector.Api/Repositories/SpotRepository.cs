@@ -1,12 +1,12 @@
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.DbEntity;
+using PikminDetector.Api.Models.Enum;
 using System.Text.Json;
 using Dapper;
-using Npgsql;
-using PikminDetector.Api.Common.Errors;
-using PikminDetector.Api.Models;
 
 namespace PikminDetector.Api.Repositories;
 
-public sealed class SpotRepository(IConfiguration configuration) : ISpotRepository
+public sealed class SpotRepository(IDbContext context) : ISpotRepository
 {
     private const string AreaSql = """
         with selected_spots as (
@@ -61,25 +61,19 @@ public sealed class SpotRepository(IConfiguration configuration) : ISpotReposito
         order by s.distance_meters, s.id, d.key
         """;
 
-    public Task<IReadOnlyList<SpotModel>> SearchAreaAsync(AreaSpotFilter filter)
+    public Task<IReadOnlyList<SpotModel>> SearchAreaAsync(AreaSpotInput filter)
     {
         return QueryAsync(AreaSql, filter);
     }
 
-    public Task<IReadOnlyList<SpotModel>> FindNearbyAsync(NearbySpotFilter filter)
+    public Task<IReadOnlyList<SpotModel>> FindNearbyAsync(NearbySpotInput filter)
     {
         return QueryAsync(NearbySql, filter);
     }
 
     private async Task<IReadOnlyList<SpotModel>> QueryAsync(string sql, object parameters)
     {
-        var connectionString = configuration.GetConnectionString("Pikmin");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new AppException(StatusCodes.Status503ServiceUnavailable, "Spot data service is not configured.");
-        }
-
-        await using var connection = new NpgsqlConnection(connectionString);
+        await using var connection = context.CreateConnection(ConnectionKeys.PostgreSql);
         var rows = await connection.QueryAsync<SpotRow>(new CommandDefinition(sql, parameters, commandTimeout: 10));
         return rows.GroupBy(row => row.Id)
             .Select(group =>

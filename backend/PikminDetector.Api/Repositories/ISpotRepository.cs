@@ -1,9 +1,10 @@
-using PikminDetector.Api.Models;
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.DbEntity;
 
 namespace PikminDetector.Api.Repositories;
 
 public interface ISpotRepository
 {
-    Task<IReadOnlyList<SpotModel>> SearchAreaAsync(AreaSpotFilter filter);
-    Task<IReadOnlyList<SpotModel>> FindNearbyAsync(NearbySpotFilter filter);
+    Task<IReadOnlyList<SpotModel>> SearchAreaAsync(AreaSpotInput filter);
+    Task<IReadOnlyList<SpotModel>> FindNearbyAsync(NearbySpotInput filter);
 }

@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+.series-row:active {
+  transform: scale(.98);
+}
+
+.series-row {
+  width: 100%;
+  min-height: 60px;
+  border: 0;
+  border-bottom: 1px solid #f0f2ed;
+  background: transparent;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 4px;
+  transition: background 140ms ease, transform 120ms ease;
+}
+
+:host(:last-child) .series-row {
+  border-bottom: 0;
+}
+
+:host(.tracking-row) .series-row {
+  padding: 10px 7px;
+}
+
+.series-row:hover,
+.series-row.current {
+  background: #f2f8ee;
+}
+
+.series-row.current {
+  border-radius: 9px;
+}
+
+.series-icon {
+  display: grid;
+  place-items: center;
+  width: 39px;
+  height: 39px;
+  flex: none;
+  border-radius: 10px;
+  background: #e8f1e6;
+  color: #69916c;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.series-row-name {
+  min-width: 0;
+  flex: 1;
+}
+
+.series-row-name strong {
+  display: block;
+  color: #3c5744;
+  font-size: 12px;
+}
+
+.series-row-name small {
+  display: block;
+  color: #96a399;
+  font-size: 10px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.missing-pill {
+  color: #ad765f;
+  background: #fcf0e9;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.missing-pill.zero {
+  color: #8d9c8d;
+  background: #f2f4ef;
+}
+
+.row-arrow {
+  color: #a7b7a8;
+  font-size: 21px;
+  padding-left: 4px;
+}
+

@@ -1,5 +1,6 @@
+using PikminDetector.Api.Models.Input;
+using PikminDetector.Api.Models.View;
 using Microsoft.AspNetCore.Mvc;
-using PikminDetector.Api.Models;
 using PikminDetector.Api.Services;
 
 namespace PikminDetector.Api.Controllers;

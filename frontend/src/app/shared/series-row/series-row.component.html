@@ -1,0 +1,6 @@
+<button type="button" class="series-row" [class.current]="selected()" [attr.aria-pressed]="selected()" (click)="selectSeries.emit()">
+  <span class="series-icon" aria-hidden="true">✿</span>
+  <span class="series-row-name"><strong>{{ series().decorTypeName }}</strong><small>{{ series().costumes.length }} 種已辨識款式</small></span>
+  <span class="missing-pill" [class.zero]="missingCount() === 0">缺 {{ missingCount() }}</span>
+  @if (showArrow()) { <span class="row-arrow" aria-hidden="true">›</span> }
+</button>

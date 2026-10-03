@@ -1,23 +1,13 @@
+using PikminDetector.Api.Models.DbEntity;
+using PikminDetector.Api.Models.Enum;
 using Dapper;
-using Npgsql;
-using PikminDetector.Api.Common.Errors;
-using PikminDetector.Api.Models;
 
 namespace PikminDetector.Api.Repositories;
 
-public interface IRecognitionCatalogRepository
-{
-    Task<IReadOnlyList<CostumeCatalogRow>> GetAvailableCostumesAsync();
-}
-
-public sealed class RecognitionCatalogRepository(IConfiguration configuration) : IRecognitionCatalogRepository
+public sealed class RecognitionCatalogRepository(IDbContext context) : IRecognitionCatalogRepository
 {
     public async Task<IReadOnlyList<CostumeCatalogRow>> GetAvailableCostumesAsync()
     {
-        var connectionString = configuration.GetConnectionString("Pikmin");
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new AppException(StatusCodes.Status503ServiceUnavailable, "Spot data service is not configured.");
-
         const string sql = """
             select d.key as DecorTypeKey, c.key as CostumeTypeKey,
                    c.display_order as DisplayOrder,
@@ -32,8 +22,7 @@ public sealed class RecognitionCatalogRepository(IConfiguration configuration) :
             order by d.display_order, c.display_order
             """;
         // The upstream transaction pooler can leave client-pooled connections unable to read the next query.
-        var connectionOptions = new NpgsqlConnectionStringBuilder(connectionString) { Pooling = false };
-        await using var connection = new NpgsqlConnection(connectionOptions.ConnectionString);
+        await using var connection = context.CreateConnection(ConnectionKeys.PostgreSql, pooling: false);
         var rows = await connection.QueryAsync<CostumeCatalogRow>(sql);
         return rows.ToArray();
     }

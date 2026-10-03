@@ -27,6 +27,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libtesseract5 \
     && rm -rf /var/lib/apt/lists/*
 COPY PikminDetector.Api.Tests/ PikminDetector.Api.Tests/
+COPY test-image/ test-image/
 RUN dotnet build PikminDetector.Api.Tests/PikminDetector.Api.Tests.csproj -c Release
 COPY --from=runtime /app/x64/ PikminDetector.Api.Tests/bin/Release/net10.0/x64/
 ENV LD_LIBRARY_PATH=/source/PikminDetector.Api.Tests/bin/Release/net10.0/x64

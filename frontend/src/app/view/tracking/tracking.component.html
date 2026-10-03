@@ -1,0 +1,25 @@
+<app-page-heading headingId="tracking-title" eyebrow="MISSING ITEMS" title="缺項追蹤" description="每次上傳只更新截圖中完整辨識到的格位；其他紀錄保留。" [note]="store.missingCount() + ' 項待尋找'" />
+<div class="recognition-strip">
+  <span class="strip-icon" aria-hidden="true">✧</span>
+  <p><strong>上傳圖鑑截圖</strong> 接受 PNG、JPEG，檔案上限 10 MB。辨識結果會儲存在此瀏覽器。</p>
+  <label class="upload-button" [class.disabled]="uploadLoading()"><input type="file" accept="image/png,image/jpeg" [disabled]="uploadLoading()" (change)="uploadImage($event)"><span>{{ uploadLoading() ? '辨識中…' : '選擇圖片 ↗' }}</span></label>
+</div>
+@if (uploadMessage()) { <p class="feedback-message" role="status">{{ uploadMessage() }}</p> }
+<div class="tracking-layout">
+  <section class="series-panel" aria-label="已辨識飾品系列">
+    <label class="search-field"><span aria-hidden="true">⌕</span><input type="search" placeholder="搜尋系列或款式" [value]="search()" (input)="setSearch($event)" aria-label="搜尋系列或款式"></label>
+    <div class="filter-row" role="group" aria-label="篩選狀態">
+      <button type="button" [class.selected]="trackingFilter() === 'missing'" (click)="trackingFilter.set('missing')">有缺項</button>
+      <button type="button" [class.selected]="trackingFilter() === 'all'" (click)="trackingFilter.set('all')">全部系列</button>
+      <button type="button" [class.selected]="trackingFilter() === 'collected'" (click)="trackingFilter.set('collected')">已完成系列</button>
+    </div>
+    <div class="series-list">
+      @for (item of visibleSeries(); track item.decorTypeKey) {
+        <app-series-row class="tracking-row" [series]="item" [missingCount]="store.seriesMissingCount(item.decorTypeKey)" [selected]="selectedSeries()?.decorTypeKey === item.decorTypeKey" (selectSeries)="chooseSeries(item)" />
+      } @empty { <div class="empty-inline">沒有符合的系列。尚未上傳時，請先選擇圖鑑截圖。</div> }
+    </div>
+    <p class="small-note">只顯示已完整辨識的款式與格位。</p>
+  </section>
+  <app-series-detail [series]="selectedSeries()" [selectedCostume]="selectedCostume()" [colors]="selectedColors()" [selectedColor]="selectedColor()" [missingCount]="store.seriesMissingCount(selectedSeries()?.decorTypeKey ?? '')" (costumeSelected)="chooseCostume($event)" (colorSelected)="selectedColorId.set($event)" (statusChanged)="setStatus($event)" />
+</div>
+

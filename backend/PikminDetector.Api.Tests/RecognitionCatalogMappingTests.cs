@@ -1,12 +1,12 @@
+using PikminDetector.Api.Models.DbEntity;
 using System.Data;
 using Dapper;
-using PikminDetector.Api.Models;
 
 namespace PikminDetector.Api.Tests;
 
 public sealed class RecognitionCatalogMappingTests
 {
-    [Fact]
+    [Test]
     public void CostumeCatalogRow_DapperMapsArrayColumnAndNames()
     {
         var table = new DataTable();
@@ -20,14 +20,14 @@ public sealed class RecognitionCatalogMappingTests
         table.Columns.Add("CostumeNameZh", typeof(string));
         table.Rows.Add("cafe", "coffee_cup", 1, new[] { "red", "ice" }, "Cafe", "咖啡廳", "Coffee Cup", "咖啡杯");
         using var reader = table.CreateDataReader();
-        Assert.True(reader.Read());
+        Assert.That(reader.Read(), Is.True);
 
         var catalogRow = reader.GetRowParser<CostumeCatalogRow>()(reader);
 
-        Assert.Equal("cafe", catalogRow.DecorTypeKey);
-        Assert.Equal("coffee_cup", catalogRow.CostumeTypeKey);
-        Assert.Equal(["red", "ice"], catalogRow.AvailableTypes);
-        Assert.Equal("咖啡廳", catalogRow.DecorNameZh);
-        Assert.Equal("咖啡杯", catalogRow.CostumeNameZh);
+        Assert.That(catalogRow.DecorTypeKey, Is.EqualTo("cafe"));
+        Assert.That(catalogRow.CostumeTypeKey, Is.EqualTo("coffee_cup"));
+        Assert.That(catalogRow.AvailableTypes, Is.EqualTo(new[] { "red", "ice" }));
+        Assert.That(catalogRow.DecorNameZh, Is.EqualTo("咖啡廳"));
+        Assert.That(catalogRow.CostumeNameZh, Is.EqualTo("咖啡杯"));
     }
 }

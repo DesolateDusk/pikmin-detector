@@ -4,7 +4,7 @@ export const remoteRoutes: Routes = [
   {
     path: '',
     title: '拾光追蹤｜皮克敏缺項紀錄',
-    data: { standalone: false },
-    loadComponent: () => import('./view/tracker/tracker.component').then((module) => module.TrackerComponent),
+    data: { showBrand: false },
+    loadComponent: () => import('./layout/layout.component').then((module) => module.LayoutComponent),
   },
 ];

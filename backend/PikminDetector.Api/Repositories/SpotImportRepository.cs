@@ -1,13 +1,12 @@
+using PikminDetector.Api.Models.DbEntity;
+using PikminDetector.Api.Models.Enum;
 using System.Data;
 using System.Text.Json;
 using Dapper;
-using Npgsql;
-using PikminDetector.Api.Common.Errors;
-using PikminDetector.Api.Models;
 
 namespace PikminDetector.Api.Repositories;
 
-public sealed class SpotImportRepository(IConfiguration configuration)
+public sealed class SpotImportRepository(IDbContext context) : ISpotImportRepository
 {
     // This staging table exists only on this connection until the transaction commits.
     private const string StageSql = """
@@ -96,12 +95,6 @@ public sealed class SpotImportRepository(IConfiguration configuration)
 
     public async Task<SpotImportCounts> SynchronizeAsync(SpotImportBatch batch)
     {
-        var connectionString = configuration.GetConnectionString("Pikmin");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new AppException(StatusCodes.Status503ServiceUnavailable, "Spot data service is not configured.");
-        }
-
         var payload = JsonSerializer.Serialize(batch.Spots.Select(spot => new
         {
             source_id = $"treelazy:{spot.SourceId}",
@@ -115,7 +108,7 @@ public sealed class SpotImportRepository(IConfiguration configuration)
         parameters.Add("City", batch.Scope.City, DbType.String);
         parameters.Add("Area", batch.Scope.Area, DbType.String);
 
-        await using var connection = new NpgsqlConnection(connectionString);
+        await using var connection = context.CreateConnection(ConnectionKeys.PostgreSql);
         await connection.OpenAsync();
         await using var transaction = await connection.BeginTransactionAsync();
         await connection.ExecuteAsync(new CommandDefinition(StageSql, parameters, transaction, commandTimeout: 120));

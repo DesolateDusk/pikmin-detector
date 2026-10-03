@@ -24,8 +24,9 @@ CodeCoverage/
 # NUnit
 *.VisualState.xml
 TestResult.xml
+**/TestResults/
 nunit-*.xml
 
 # App Settings
 **/appsettings*.json
-!**/appsettings.example.json
+!**/appsettings*.example.json

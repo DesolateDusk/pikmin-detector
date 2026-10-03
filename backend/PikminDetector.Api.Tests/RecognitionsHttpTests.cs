@@ -1,17 +1,17 @@
+using PikminDetector.Api.Models.View;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PikminDetector.Api.Controllers;
-using PikminDetector.Api.Models;
 using PikminDetector.Api.Services;
 
 namespace PikminDetector.Api.Tests;
 
 public sealed class RecognitionsHttpTests
 {
-    [Fact]
+    [Test]
     public async Task Recognize_ReturnsSeriesCostumeAndEveryAvailableType()
     {
         using var factory = new WebApplicationFactory<RecognitionsController>().WithWebHostBuilder(builder =>
@@ -28,15 +28,15 @@ public sealed class RecognitionsHttpTests
         response.EnsureSuccessStatusCode();
         var payload = await response.Content.ReadFromJsonAsync<RecognitionVM>();
 
-        var series = Assert.Single(payload!.Series);
-        Assert.Equal("cafe", series.DecorTypeKey);
-        Assert.Equal("咖啡廳", series.DecorTypeName);
-        var costume = Assert.Single(series.Costumes);
-        Assert.Equal("coffee_cup", costume.CostumeTypeKey);
-        Assert.Equal("咖啡杯", costume.CostumeTypeName);
-        Assert.Equal(
-            [new RecognizedPikminVM("red", "collected"), new RecognizedPikminVM("ice", "missing")],
-            costume.AvailableTypes);
+        Assert.That(payload!.Series, Has.Exactly(1).Items);
+        var series = payload!.Series.Single();
+        Assert.That(series.DecorTypeKey, Is.EqualTo("cafe"));
+        Assert.That(series.DecorTypeName, Is.EqualTo("咖啡廳"));
+        Assert.That(series.Costumes, Has.Exactly(1).Items);
+        var costume = series.Costumes.Single();
+        Assert.That(costume.CostumeTypeKey, Is.EqualTo("coffee_cup"));
+        Assert.That(costume.CostumeTypeName, Is.EqualTo("咖啡杯"));
+        Assert.That(costume.AvailableTypes, Is.EqualTo(new[] { new RecognizedPikminVM("red", "collected"), new RecognizedPikminVM("ice", "missing") }));
     }
 
     private sealed class FixedRecognition : IRecognitionService

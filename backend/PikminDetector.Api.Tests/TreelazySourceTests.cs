@@ -1,13 +1,13 @@
+using PikminDetector.Api.Models.DbEntity;
 using System.Net;
 using System.Text;
-using PikminDetector.Api.Models;
 using PikminDetector.Api.Services;
 
 namespace PikminDetector.Api.Tests;
 
 public sealed class TreelazySourceTests
 {
-    [Fact]
+    [Test]
     public async Task GetTaiwanAreaAsync_MixedAndPureRecords_ImportsOnlyPureWithPathGeography()
     {
         using var handler = new SourceHandler("""
@@ -20,17 +20,18 @@ public sealed class TreelazySourceTests
 
         var batch = await new TreelazySource(client).GetTaiwanAreaAsync("臺北市", "信義區");
 
-        Assert.Equal("https://treelazy.com/pikmin/data/%E8%87%BA%E5%8C%97%E5%B8%82/%E4%BF%A1%E7%BE%A9%E5%8D%80.json", handler.LastUri);
-        Assert.Equal(2, batch.SourceCount);
-        var spot = Assert.Single(batch.Spots);
-        Assert.Equal("pure-1", spot.SourceId);
-        Assert.Equal("TW", spot.Country);
-        Assert.Equal("臺北市", spot.City);
-        Assert.Equal("信義區", spot.Area);
-        Assert.Equal("park", Assert.Single(spot.DecorKeys));
+        Assert.That(handler.LastUri, Is.EqualTo("https://treelazy.com/pikmin/data/%E8%87%BA%E5%8C%97%E5%B8%82/%E4%BF%A1%E7%BE%A9%E5%8D%80.json"));
+        Assert.That(batch.SourceCount, Is.EqualTo(2));
+        Assert.That(batch.Spots, Has.Exactly(1).Items);
+        var spot = batch.Spots.Single();
+        Assert.That(spot.SourceId, Is.EqualTo("pure-1"));
+        Assert.That(spot.Country, Is.EqualTo("TW"));
+        Assert.That(spot.City, Is.EqualTo("臺北市"));
+        Assert.That(spot.Area, Is.EqualTo("信義區"));
+        Assert.That(spot.DecorKeys.Single(), Is.EqualTo("park"));
     }
 
-    [Fact]
+    [Test]
     public async Task GetCountryAsync_JapanCity_FiltersCountryFileByRecordCity()
     {
         using var handler = new SourceHandler("""
@@ -44,15 +45,16 @@ public sealed class TreelazySourceTests
         var batch = await new TreelazySource(client)
             .GetCountryAsync(new SpotImportScope("JP", "東京23区", null));
 
-        Assert.Equal("https://treelazy.com/pikmin/data/japan.json", handler.LastUri);
-        Assert.Equal(1, batch.SourceCount);
-        var spot = Assert.Single(batch.Spots);
-        Assert.Equal("JP", spot.Country);
-        Assert.Equal("東京23区", spot.City);
-        Assert.Null(spot.Area);
+        Assert.That(handler.LastUri, Is.EqualTo("https://treelazy.com/pikmin/data/japan.json"));
+        Assert.That(batch.SourceCount, Is.EqualTo(1));
+        Assert.That(batch.Spots, Has.Exactly(1).Items);
+        var spot = batch.Spots.Single();
+        Assert.That(spot.Country, Is.EqualTo("JP"));
+        Assert.That(spot.City, Is.EqualTo("東京23区"));
+        Assert.That(spot.Area, Is.Null);
     }
 
-    [Fact]
+    [Test]
     public async Task GetCountryAsync_NoPureRecords_ReturnsEmptyBatch()
     {
         using var handler = new SourceHandler("""
@@ -63,11 +65,11 @@ public sealed class TreelazySourceTests
         var batch = await new TreelazySource(client)
             .GetCountryAsync(new SpotImportScope("JP", "東京23区", null));
 
-        Assert.Equal(1, batch.SourceCount);
-        Assert.Empty(batch.Spots);
+        Assert.That(batch.SourceCount, Is.EqualTo(1));
+        Assert.That(batch.Spots, Is.Empty);
     }
 
-    [Fact]
+    [Test]
     public async Task GetCountryAsync_CountryScope_PreservesCityFromEachRecord()
     {
         using var handler = new SourceHandler("""
@@ -81,11 +83,11 @@ public sealed class TreelazySourceTests
         var batch = await new TreelazySource(client)
             .GetCountryAsync(new SpotImportScope("JP", null, null));
 
-        Assert.Equal("東京23区", batch.Spots[0].City);
-        Assert.Null(batch.Spots[1].City);
+        Assert.That(batch.Spots[0].City, Is.EqualTo("東京23区"));
+        Assert.That(batch.Spots[1].City, Is.Null);
     }
 
-    [Fact]
+    [Test]
     public async Task GetCountryAsync_UnknownCity_RejectsBeforeImport()
     {
         using var handler = new SourceHandler("""
@@ -93,11 +95,11 @@ public sealed class TreelazySourceTests
             """);
         using var client = new HttpClient(handler);
 
-        await Assert.ThrowsAsync<InvalidDataException>(() => new TreelazySource(client)
+        Assert.ThrowsAsync<InvalidDataException>(() => new TreelazySource(client)
             .GetCountryAsync(new SpotImportScope("JP", "大阪市", null)));
     }
 
-    [Fact]
+    [Test]
     public async Task GetCountryAsync_PureRecordWithTwoDecorTypes_RejectsAmbiguousSource()
     {
         using var handler = new SourceHandler("""
@@ -105,11 +107,11 @@ public sealed class TreelazySourceTests
             """);
         using var client = new HttpClient(handler);
 
-        await Assert.ThrowsAsync<InvalidDataException>(() => new TreelazySource(client)
+        Assert.ThrowsAsync<InvalidDataException>(() => new TreelazySource(client)
             .GetCountryAsync(new SpotImportScope("JP", "東京23区", null)));
     }
 
-    [Fact]
+    [Test]
     public async Task GetAreasAsync_TaipeiPage_ReturnsAreasOnce()
     {
         using var handler = new SourceHandler("""
@@ -120,8 +122,8 @@ public sealed class TreelazySourceTests
 
         var areas = await new TreelazySource(client).GetAreasAsync("臺北市");
 
-        Assert.Equal("https://treelazy.com/pikmin/taipei", handler.LastUri);
-        Assert.Equal(["信義區", "士林區"], areas);
+        Assert.That(handler.LastUri, Is.EqualTo("https://treelazy.com/pikmin/taipei"));
+        Assert.That(areas, Is.EqualTo(new[] { "信義區", "士林區" }));
     }
 
     private sealed class SourceHandler(string body) : HttpMessageHandler
