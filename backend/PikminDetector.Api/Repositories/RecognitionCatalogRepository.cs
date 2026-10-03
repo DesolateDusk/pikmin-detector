@@ -23,13 +23,17 @@ public sealed class RecognitionCatalogRepository(IConfiguration configuration) :
                    c.display_order as DisplayOrder,
                    c.available_types as AvailableTypes,
                    d.name->>'en' as DecorNameEn,
-                   d.name->>'zh-TW' as DecorNameZh
+                   d.name->>'zh-TW' as DecorNameZh,
+                   c.name->>'en' as CostumeNameEn,
+                   c.name->>'zh-TW' as CostumeNameZh
             from pikmin.costume_type c
             join pikmin.decor_type d on d.id = c.decor_id
             where c.available_types is not null
             order by d.display_order, c.display_order
             """;
-        await using var connection = new NpgsqlConnection(connectionString);
+        // The upstream transaction pooler can leave client-pooled connections unable to read the next query.
+        var connectionOptions = new NpgsqlConnectionStringBuilder(connectionString) { Pooling = false };
+        await using var connection = new NpgsqlConnection(connectionOptions.ConnectionString);
         var rows = await connection.QueryAsync<CostumeCatalogRow>(sql);
         return rows.ToArray();
     }

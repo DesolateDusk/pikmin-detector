@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: pikmin-detector-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/PikminDetector.Api/Dockerfile
+    dockerContext: ./backend
+    buildFilter:
+      paths:
+        - backend/**
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+    # 應用設定由 Doppler Render integration 同步，不在 Blueprint 重複管理。

@@ -4,12 +4,15 @@ public sealed record RecognitionVM(IReadOnlyList<RecognizedSeriesVM> Series);
 
 public sealed record RecognizedSeriesVM(
     string DecorTypeKey,
-    IReadOnlyList<MissingPikminVM> Missing);
+    string DecorTypeName,
+    IReadOnlyList<RecognizedCostumeVM> Costumes);
 
-public sealed record MissingPikminVM(
-    string DecorTypeKey,
+public sealed record RecognizedCostumeVM(
     string CostumeTypeKey,
-    string PikminType);
+    string CostumeTypeName,
+    IReadOnlyList<RecognizedPikminVM> AvailableTypes);
+
+public sealed record RecognizedPikminVM(string PikminType, string Status);
 
 public sealed record CostumeCatalogRow(
     string DecorTypeKey,
@@ -17,4 +20,9 @@ public sealed record CostumeCatalogRow(
     int DisplayOrder,
     string[] AvailableTypes,
     string DecorNameEn = "",
-    string DecorNameZh = "");
+    string DecorNameZh = "",
+    string CostumeNameEn = "",
+    string CostumeNameZh = "")
+{
+    public CostumeCatalogRow() : this("", "", 0, [], "", "", "", "") { }
+}

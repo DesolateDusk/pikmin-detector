@@ -8,7 +8,7 @@ namespace PikminDetector.Api.Tests;
 public sealed class RecognitionServiceTests
 {
     [Fact]
-    public async Task RecognizeAsync_CompleteCafeCard_ReturnsOnlyMissingIcePikmin()
+    public async Task RecognizeAsync_CompleteCafeCard_ReturnsEveryVisibleTypeWithStatus()
     {
         var service = new RecognitionService(new FixedCatalog(
             new CostumeCatalogRow("cafe", "coffee_cup", 1,
@@ -23,11 +23,16 @@ public sealed class RecognitionServiceTests
 
         var cafe = Assert.Single(result.Series);
         Assert.Equal("cafe", cafe.DecorTypeKey);
-        Assert.Equal(new MissingPikminVM("cafe", "coffee_cup", "ice"), Assert.Single(cafe.Missing));
+        Assert.Equal("咖啡廳", cafe.DecorTypeName);
+        var costume = Assert.Single(cafe.Costumes);
+        Assert.Equal("coffee_cup", costume.CostumeTypeKey);
+        Assert.Equal(8, costume.AvailableTypes.Count);
+        Assert.Equal(new RecognizedPikminVM("red", "collected"), costume.AvailableTypes[0]);
+        Assert.Equal(new RecognizedPikminVM("ice", "missing"), costume.AvailableTypes[^1]);
     }
 
     [Fact]
-    public async Task RecognizeAsync_CompleteBakeryCard_ReportsMissingByCostumeAndType()
+    public async Task RecognizeAsync_CompleteBakeryCard_ReportsEveryTypeByCostume()
     {
         var service = new RecognitionService(new FixedCatalog(
             new CostumeCatalogRow("bakery", "baguette", 1,
@@ -42,21 +47,20 @@ public sealed class RecognitionServiceTests
 
         var bakery = Assert.Single(result.Series);
         Assert.Equal("bakery", bakery.DecorTypeKey);
-        Assert.Equal(
-            [new MissingPikminVM("bakery", "baguette", "yellow"),
-             new MissingPikminVM("bakery", "baguette", "blue"),
-             new MissingPikminVM("bakery", "baguette", "white"),
-             new MissingPikminVM("bakery", "baguette", "purple"),
-             new MissingPikminVM("bakery", "baguette", "ice"),
-             new MissingPikminVM("bakery", "pastry", "red"),
-             new MissingPikminVM("bakery", "pastry", "yellow"),
-             new MissingPikminVM("bakery", "pastry", "blue"),
-             new MissingPikminVM("bakery", "pastry", "white"),
-             new MissingPikminVM("bakery", "pastry", "purple"),
-             new MissingPikminVM("bakery", "pastry", "rock"),
-             new MissingPikminVM("bakery", "pastry", "winged"),
-             new MissingPikminVM("bakery", "pastry", "ice")],
-            bakery.Missing);
+        Assert.Collection(bakery.Costumes,
+            baguette =>
+            {
+                Assert.Equal("baguette", baguette.CostumeTypeKey);
+                Assert.Equal(8, baguette.AvailableTypes.Count);
+                Assert.Equal(new RecognizedPikminVM("red", "collected"), baguette.AvailableTypes[0]);
+                Assert.Equal(new RecognizedPikminVM("yellow", "missing"), baguette.AvailableTypes[1]);
+            },
+            pastry =>
+            {
+                Assert.Equal("pastry", pastry.CostumeTypeKey);
+                Assert.Equal(8, pastry.AvailableTypes.Count);
+                Assert.All(pastry.AvailableTypes, type => Assert.Equal("missing", type.Status));
+            });
     }
 
     [Fact]
@@ -93,10 +97,10 @@ public sealed class RecognitionServiceTests
 
         var snow = Assert.Single(result.Series, series => series.DecorTypeKey == "snowy_day");
         Assert.Equal(
-            [new MissingPikminVM("snowy_day", "snow", "blue"),
-             new MissingPikminVM("snowy_day", "snow", "white"),
-             new MissingPikminVM("snowy_day", "snow", "ice")],
-            snow.Missing);
+            [new RecognizedPikminVM("blue", "missing"),
+             new RecognizedPikminVM("white", "missing"),
+             new RecognizedPikminVM("ice", "missing")],
+            Assert.Single(snow.Costumes).AvailableTypes);
     }
 
     [Fact]
@@ -112,7 +116,7 @@ public sealed class RecognitionServiceTests
 
         var cafe = Assert.Single(result.Series);
         Assert.Equal("cafe", cafe.DecorTypeKey);
-        Assert.Equal(new MissingPikminVM("cafe", "coffee_cup", "ice"), Assert.Single(cafe.Missing));
+        Assert.Equal(new RecognizedPikminVM("ice", "missing"), Assert.Single(cafe.Costumes).AvailableTypes[^1]);
     }
 
     [Fact]

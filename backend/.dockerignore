@@ -1,0 +1,13 @@
+# API source and fixtures are needed by the backend build and Linux test stages.
+**
+!PikminDetector.Api/
+!PikminDetector.Api/**
+!PikminDetector.Api.Tests/
+!PikminDetector.Api.Tests/**
+**/bin/
+**/obj/
+**/logs/
+**/.env
+**/.env.*
+**/secrets.json
+**/appsettings*.json

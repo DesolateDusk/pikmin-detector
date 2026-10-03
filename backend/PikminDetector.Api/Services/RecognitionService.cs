@@ -98,15 +98,29 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
                 if (slots.Length == 0)
                     continue;
 
-                var missing = slots
-                    .Where(slot => !IsColored(screenshot, slot.X, top + 420 + slot.Row * 320))
-                    .Select(slot => new MissingPikminVM(group.Key, slot.CostumeKey, slot.PikminType))
+                var recognizedCostumes = rows
+                    .Where(row => visibleCostumes.Contains(row.CostumeTypeKey))
+                    .Select(row => new RecognizedCostumeVM(
+                        row.CostumeTypeKey,
+                        DisplayName(row.CostumeNameZh, row.CostumeNameEn, row.CostumeTypeKey),
+                        slots.Where(slot => slot.CostumeKey == row.CostumeTypeKey)
+                            .Select(slot => new RecognizedPikminVM(
+                                slot.PikminType,
+                                IsColored(screenshot, slot.X, top + 420 + slot.Row * 320)
+                                    ? "collected" : "missing"))
+                            .ToArray()))
                     .ToArray();
-                results.Add(new RecognizedSeriesVM(group.Key, missing));
+                results.Add(new RecognizedSeriesVM(
+                    group.Key,
+                    DisplayName(rows[0].DecorNameZh, rows[0].DecorNameEn, group.Key),
+                    recognizedCostumes));
             }
             return new RecognitionVM(results);
         }
     }
+
+    private static string DisplayName(string zh, string en, string key) =>
+        !string.IsNullOrWhiteSpace(zh) ? zh : !string.IsNullOrWhiteSpace(en) ? en : key;
 
     private static string ReadTitle(Image<Rgb24> screenshot, int iconY, TesseractEngine ocr, bool enlarge)
     {

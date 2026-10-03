@@ -1,0 +1,31 @@
+# .NET build output
+**/bin/
+**/obj/
+**/logs/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet Packages
+*.nupkg
+# NuGet Symbol Packages
+*.snupkg
+
+# Others
+~$*
+*~
+CodeCoverage/
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# App Settings
+**/appsettings*.json
+!**/appsettings.example.json

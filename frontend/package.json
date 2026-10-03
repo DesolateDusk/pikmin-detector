@@ -1,0 +1,32 @@
+{
+  "name": "pikmin-detector",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.19.0",
+  "scripts": {
+    "configure:local": "node scripts/configure-local.mjs",
+    "test:configuration": "node --test scripts/configuration.test.mjs",
+    "start": "ng serve",
+    "build": "node scripts/configure-production.mjs && ng build",
+    "build:pages": "node scripts/configure-production.mjs && ng build --base-href /pikmin-detector/ --output-path dist/pikmin-detector-pages",
+    "test": "ng test"
+  },
+  "dependencies": {
+    "@angular-architects/native-federation": "22.1.0",
+    "@angular/common": "~22.1.0",
+    "@angular/compiler": "~22.1.0",
+    "@angular/core": "~22.1.0",
+    "@angular/forms": "~22.1.0",
+    "@angular/platform-browser": "~22.1.0",
+    "@angular/router": "~22.1.0",
+    "es-module-shims": "^2.8.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "~22.1.0",
+    "@angular/cli": "~22.1.0",
+    "@angular/compiler-cli": "~22.1.0",
+    "typescript": "~6.0.2"
+  }
+}

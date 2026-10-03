@@ -634,6 +634,43 @@
   background: #f9fcf7;
 }
 
+.upload-button {
+  position: relative;
+  flex: none;
+  border-radius: 7px;
+  background: #fff;
+  color: #4d8054;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.upload-button:focus-within {
+  outline: 2px solid #315e45;
+  outline-offset: 2px;
+}
+
+.upload-button.disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.upload-button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.feedback-message {
+  margin: 9px 0 16px;
+  color: #476b50;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
 .strip-done {
   font-size: 10px;
   color: #8fa78f;
@@ -962,11 +999,15 @@
 }
 
 .location-bar>span {
-  margin-left: auto;
+  flex: 1;
   color: #668b68;
   font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.location-bar .primary-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 
 .mock-info {
@@ -1259,7 +1300,8 @@
   }
 
   .recognition-strip button,
-  .strip-done {
+  .strip-done,
+  .upload-button {
     margin-left: 30px;
   }
 
