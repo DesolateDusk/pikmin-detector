@@ -1,0 +1,37 @@
+name: Test backend
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/dotnet/sdk:10.0-noble
+    env:
+      TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata
+    defaults:
+      run:
+        shell: bash
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Linux OCR libraries
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libtesseract5 tesseract-ocr-eng tesseract-ocr-chi-tra
+      - name: Build tests
+        run: dotnet build PikminDetector.Api.Tests/PikminDetector.Api.Tests.csproj -c Release
+      - name: Configure native library names for Tesseract wrapper
+        run: |
+          native_dir="$PWD/PikminDetector.Api.Tests/bin/Release/net10.0/x64"
+          mkdir -p "$native_dir"
+          ln -s /usr/lib/x86_64-linux-gnu/liblept.so.5 "$native_dir/libleptonica-1.82.0.so"
+          ln -s /usr/lib/x86_64-linux-gnu/libtesseract.so.5 "$native_dir/libtesseract50.so"
+          ln -s /usr/lib/x86_64-linux-gnu/libdl.so.2 "$native_dir/libdl.so"
+          echo "LD_LIBRARY_PATH=$native_dir" >> "$GITHUB_ENV"
+      - name: Test Linux OCR and API
+        run: dotnet test PikminDetector.Api.Tests/PikminDetector.Api.Tests.csproj -c Release --no-build
+

@@ -20,8 +20,4 @@
     <Content Update="appsettings*.example.json" CopyToOutputDirectory="Never" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="tessdata/*.traineddata" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <EmbeddedResource Include="RecognitionTemplates/cafe.png" />
-  </ItemGroup>
 </Project>

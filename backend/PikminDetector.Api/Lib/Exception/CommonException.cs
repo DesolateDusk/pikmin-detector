@@ -13,6 +13,3 @@ public class CommonException : Exception
         Detail = detail;
     }
 }
-
-public sealed class ServiceException(string message, object? detail = null)
-    : CommonException(StatusCodes.Status503ServiceUnavailable, message, detail);

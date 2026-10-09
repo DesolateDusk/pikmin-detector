@@ -1,0 +1,41 @@
+name: Test and deploy application
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: application-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend-test:
+    uses: ./.github/workflows/backend.yml
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  frontend:
+    needs: [backend-test, frontend-test]
+    uses: ./.github/workflows/deploy-pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write

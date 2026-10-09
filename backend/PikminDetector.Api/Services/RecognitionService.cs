@@ -15,9 +15,11 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
 {
     private const long MaximumImageBytes = 10_000_000;
     private const int ReferenceWidth = 1290;
-    private const int IconX = 106;
-    private const int IconSize = 150;
-    private static readonly Lazy<Image<Rgb24>> IconFrame = new(LoadIconFrame);
+    private const int BadgeX = 106;
+    private const int BadgeSize = 150;
+    private static readonly (double X, double Y)[] CircleDirections = Enumerable.Range(0, 32)
+        .Select(index => (Math.Cos(index * Math.Tau / 32), Math.Sin(index * Math.Tau / 32)))
+        .ToArray();
 
     public async Task<RecognitionVM> RecognizeAsync(Stream image, string contentType, long length)
     {
@@ -51,32 +53,37 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
 
             var costumes = await catalog.GetAvailableCostumesAsync();
             var results = new List<RecognizedSeriesVM>();
+            var headers = FindCardHeaders(screenshot);
+            if (headers.Count == 0)
+                return new RecognitionVM(results);
+
+            var languageData = Environment.GetEnvironmentVariable("TESSDATA_PREFIX");
             using var mixedOcr = new TesseractEngine(
-                Path.Combine(AppContext.BaseDirectory, "tessdata"),
+                languageData,
                 "chi_tra+eng", EngineMode.LstmOnly);
             using var chineseOcr = new TesseractEngine(
-                Path.Combine(AppContext.BaseDirectory, "tessdata"),
+                languageData,
                 "chi_tra", EngineMode.LstmOnly);
             using var englishOcr = new TesseractEngine(
-                Path.Combine(AppContext.BaseDirectory, "tessdata"),
+                languageData,
                 "eng", EngineMode.LstmOnly);
             var groups = costumes.GroupBy(row => row.DecorTypeKey).ToArray();
-            foreach (var iconY in FindIcons(screenshot, IconFrame.Value))
+            foreach (var headerY in headers)
             {
-                var title = ReadTitle(screenshot, iconY, mixedOcr, false);
+                var title = ReadTitle(screenshot, headerY, mixedOcr, false);
                 var group = groups.FirstOrDefault(candidate =>
                     SameTitle(title, candidate.First().DecorNameEn) ||
                     SameTitle(title, candidate.First().DecorNameZh));
                 if (group is null)
                 {
-                    title = ReadTitle(screenshot, iconY, chineseOcr, true);
+                    title = ReadTitle(screenshot, headerY, chineseOcr, true);
                     group = groups.FirstOrDefault(candidate =>
                         SameTitle(title, candidate.First().DecorNameEn) ||
                         SameTitle(title, candidate.First().DecorNameZh));
                 }
                 if (group is null)
                 {
-                    title = ReadTitle(screenshot, iconY, englishOcr, true);
+                    title = ReadTitle(screenshot, headerY, englishOcr, true);
                     group = groups.FirstOrDefault(candidate =>
                         SameTitle(title, candidate.First().DecorNameEn) ||
                         SameTitle(title, candidate.First().DecorNameZh));
@@ -84,7 +91,7 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
                 if (group is null)
                     continue;
                 var rows = group.OrderBy(row => row.DisplayOrder).ToArray();
-                var top = iconY - 40;
+                var top = headerY - 40;
                 var bottom = FindCardBottom(screenshot, top);
                 if (bottom is null)
                     continue;
@@ -123,13 +130,13 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
     private static string DisplayName(string zh, string en, string key) =>
         !string.IsNullOrWhiteSpace(zh) ? zh : !string.IsNullOrWhiteSpace(en) ? en : key;
 
-    private static string ReadTitle(Image<Rgb24> screenshot, int iconY, TesseractEngine ocr, bool enlarge)
+    private static string ReadTitle(Image<Rgb24> screenshot, int headerY, TesseractEngine ocr, bool enlarge)
     {
-        if (iconY + 125 >= screenshot.Height)
+        if (headerY + 125 >= screenshot.Height)
             return string.Empty;
         using var title = screenshot.Clone(operation =>
         {
-            operation.Crop(new SixLabors.ImageSharp.Rectangle(270, iconY + 15, 600, 110));
+            operation.Crop(new SixLabors.ImageSharp.Rectangle(270, headerY + 15, 600, 110));
             if (enlarge)
                 operation.Resize(1800, 330);
         });
@@ -160,49 +167,50 @@ public sealed class RecognitionService(IRecognitionCatalogRepository catalog) : 
         return builder.ToString();
     }
 
-    private static Image<Rgb24> LoadIconFrame()
+    private static IReadOnlyList<int> FindCardHeaders(Image<Rgb24> image)
     {
-        var assembly = typeof(RecognitionService).Assembly;
-        using var stream = assembly.GetManifestResourceStream(
-            "PikminDetector.Api.RecognitionTemplates.cafe.png")!;
-        return Image.Load<Rgb24>(stream);
-    }
-
-    private static IReadOnlyList<int> FindIcons(Image<Rgb24> image, Image<Rgb24> template)
-    {
-        var matches = new List<(int Y, double Error)>();
-        for (var y = 300; y <= image.Height - IconSize; y += 2)
+        var matches = new List<(int Y, double Contrast)>();
+        var centerX = BadgeX + BadgeSize / 2;
+        for (var y = 300; y < image.Height - BadgeSize - 8; y += 2)
         {
-            long difference = 0;
-            var points = 0;
-            for (var dy = 2; dy < IconSize; dy += 3)
+            var centerY = y + BadgeSize / 2;
+            var edges = 0;
+            double contrast = 0;
+            // Sample the badge border and its surrounding card, leaving the category artwork out.
+            foreach (var direction in CircleDirections)
             {
-                for (var dx = 2; dx < IconSize; dx += 3)
+                var outside = image[centerX + (int)Math.Round(direction.X * 82),
+                    centerY + (int)Math.Round(direction.Y * 82)];
+                if (outside.R < 230 || outside.G < 230 || outside.B < 220 ||
+                    Math.Max(outside.R, Math.Max(outside.G, outside.B)) -
+                    Math.Min(outside.R, Math.Min(outside.G, outside.B)) > 20)
+                    continue;
+
+                var borderContrast = 0;
+                for (var radius = 67; radius <= 74; radius++)
                 {
-                    var xx = dx - IconSize / 2;
-                    var yy = dy - IconSize / 2;
-                    var radiusSquared = xx * xx + yy * yy;
-                    if (radiusSquared is < 3969 or > 5476)
-                        continue;
-                    var a = image[IconX + dx, y + dy];
-                    var b = template[dx, dy];
-                    difference += Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
-                    points++;
+                    var border = image[centerX + (int)Math.Round(direction.X * radius),
+                        centerY + (int)Math.Round(direction.Y * radius)];
+                    borderContrast = Math.Max(borderContrast,
+                        (outside.R + outside.G + outside.B - border.R - border.G - border.B) / 3);
                 }
+                if (borderContrast < 25)
+                    continue;
+                edges++;
+                contrast += borderContrast;
             }
-            var error = (double)difference / (points * 3);
-            if (error < 20)
-                matches.Add((y, error));
+            // Allow highlights and shadows to obscure up to a quarter of the circular border.
+            if (edges >= CircleDirections.Length * 3 / 4)
+                matches.Add((y, contrast));
         }
 
         var found = new List<int>();
-        foreach (var cluster in matches.GroupBy(match => match.Y / 100))
+        foreach (var match in matches.OrderByDescending(match => match.Contrast))
         {
-            var best = cluster.MinBy(match => match.Error);
-            if (found.All(y => Math.Abs(y - best.Y) > 120))
-                found.Add(best.Y);
+            if (found.All(y => Math.Abs(y - match.Y) > BadgeSize))
+                found.Add(match.Y);
         }
-        return found;
+        return found.Order().ToArray();
     }
 
     private static int? FindCardBottom(Image<Rgb24> image, int top)

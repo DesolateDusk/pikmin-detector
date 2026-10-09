@@ -23,4 +23,8 @@
     <ProjectReference Include="..\PikminDetector.Api\PikminDetector.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestData/**/*.jpg" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

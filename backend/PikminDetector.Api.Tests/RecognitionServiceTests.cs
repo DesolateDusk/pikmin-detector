@@ -3,6 +3,9 @@ using PikminDetector.Api.Models.DbEntity;
 using PikminDetector.Api.Lib.CustomException;
 using PikminDetector.Api.Repositories;
 using PikminDetector.Api.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace PikminDetector.Api.Tests;
 
@@ -70,7 +73,7 @@ public sealed class RecognitionServiceTests
         var service = new RecognitionService(new FixedCatalog(
             Row("park", "clover", 1, EightTypes, "Park", "公園"),
             Row("park", "four_leaf_clover", 2, EightTypes, "Park", "公園")));
-        await using var screenshot = OpenSample("S__126738472(1).jpg");
+        await using var screenshot = OpenSample("S__126738472_0.jpg");
 
         var result = await service.RecognizeAsync(screenshot, "image/jpeg", screenshot.Length);
 
@@ -148,6 +151,79 @@ public sealed class RecognitionServiceTests
         Assert.That(result.Series, Is.Empty);
     }
 
+    [TestCase(1290)]
+    [TestCase(900)]
+    public async Task RecognizeAsync_DifferentBadgeArtworkAndBorderColor_ReturnsCompleteCollection(int width)
+    {
+        var service = new RecognitionService(new FixedCatalog(
+            Row("corner_store", "bottle_cap", 1, SevenTypes, "Corner Store", "便利店"),
+            Row("corner_store", "snack", 2, SevenTypes, "Corner Store", "便利店")));
+        using var source = OpenSample("S__126738468_0.jpg");
+        using var screenshot = Image.Load<Rgb24>(source);
+        // Replace the category badge with a plain blue circle, keeping the card title and collection intact.
+        for (var y = 660; y <= 810; y++)
+        {
+            for (var x = 106; x <= 256; x++)
+            {
+                var radiusSquared = (x - 181) * (x - 181) + (y - 735) * (y - 735);
+                if (radiusSquared <= 75 * 75)
+                    screenshot[x, y] = radiusSquared >= 64 * 64
+                        ? new Rgb24(35, 65, 150)
+                        : new Rgb24(255, 255, 255);
+            }
+        }
+        screenshot.Mutate(operation => operation.Resize(width, 0));
+        await using var png = new MemoryStream();
+        await screenshot.SaveAsPngAsync(png);
+        png.Position = 0;
+
+        var result = await service.RecognizeAsync(png, "image/png", png.Length);
+
+        Assert.That(result.Series, Has.Exactly(1).Items);
+        var store = result.Series.Single();
+        Assert.That(store.DecorTypeKey, Is.EqualTo("corner_store"));
+        Assert.That(store.Costumes, Has.Count.EqualTo(2));
+        AssertCostume(store.Costumes[0], "bottle_cap", SevenTypes,
+            "collected", "collected", "collected", "collected", "collected", "collected", "collected");
+        AssertCostume(store.Costumes[1], "snack", SevenTypes,
+            "collected", "collected", "collected", "collected", "collected", "collected", "collected");
+    }
+
+    [Test]
+    public async Task RecognizeAsync_RectangularBadgeWithValidTitle_SkipsSeries()
+    {
+        var service = new RecognitionService(new FixedCatalog(
+            Row("corner_store", "bottle_cap", 1, SevenTypes, "Corner Store", "便利店"),
+            Row("corner_store", "snack", 2, SevenTypes, "Corner Store", "便利店")));
+        using var source = OpenSample("S__126738468_0.jpg");
+        using var screenshot = Image.Load<Rgb24>(source);
+        for (var y = 655; y <= 815; y++)
+            for (var x = 101; x <= 261; x++)
+                screenshot[x, y] = new Rgb24(160, 125, 40);
+        await using var png = new MemoryStream();
+        await screenshot.SaveAsPngAsync(png);
+        png.Position = 0;
+
+        var result = await service.RecognizeAsync(png, "image/png", png.Length);
+
+        Assert.That(result.Series, Is.Empty);
+    }
+
+    [Test]
+    public async Task RecognizeAsync_BlankPortrait_ReturnsNoSeries()
+    {
+        var service = new RecognitionService(new FixedCatalog(
+            Row("corner_store", "bottle_cap", 1, SevenTypes, "Corner Store", "便利店")));
+        using var screenshot = new Image<Rgb24>(1290, 2796, new Rgb24(255, 255, 255));
+        await using var png = new MemoryStream();
+        await screenshot.SaveAsPngAsync(png);
+        png.Position = 0;
+
+        var result = await service.RecognizeAsync(png, "image/png", png.Length);
+
+        Assert.That(result.Series, Is.Empty);
+    }
+
     private static CostumeCatalogRow Row(
         string decorKey, string costumeKey, int order, string[] types, string englishName, string chineseName)
         => new(decorKey, costumeKey, order, types, englishName, chineseName);
@@ -162,12 +238,7 @@ public sealed class RecognitionServiceTests
 
     private static FileStream OpenSample(string fileName)
     {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null && !Directory.Exists(
-                   Path.Combine(directory.FullName, "test-image")))
-            directory = directory.Parent;
-        var path = Path.Combine(directory?.FullName ?? throw new DirectoryNotFoundException("test-image"),
-            "test-image", fileName);
+        var path = Path.Combine(AppContext.BaseDirectory, "TestData", fileName);
         return File.OpenRead(path);
     }
 

@@ -3,11 +3,15 @@ services:
     name: pikmin-detector-api
     runtime: docker
     plan: free
+    branch: main
+    autoDeployTrigger: checksPass
     dockerfilePath: ./backend/PikminDetector.Api/Dockerfile
     dockerContext: ./backend
     buildFilter:
       paths:
         - backend/**
+        - .github/workflows/ci.yml
+        - .github/workflows/backend.yml
     healthCheckPath: /health
     envVars:
       - key: ASPNETCORE_ENVIRONMENT

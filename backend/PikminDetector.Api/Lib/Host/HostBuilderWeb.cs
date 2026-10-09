@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.Extensions.Options;
-using Npgsql;
 using PikminDetector.Api.Models;
 using PikminDetector.Api.Repositories;
 using PikminDetector.Api.Services;
@@ -12,18 +11,8 @@ public static class HostBuilderWeb
 {
     public static void SetupConfiguration(WebApplicationBuilder builder)
     {
-        var production = !builder.Environment.IsDevelopment();
-        builder.Services.AddOptions<Database>()
-            .BindConfiguration("ConnectionStrings")
-            .Validate(settings => !production || IsValidConnectionString(settings.Pikmin),
-                "ConnectionStrings:Pikmin must be a valid Npgsql connection string.")
-            .ValidateOnStart();
-        builder.Services.AddOptions<AppSettings>()
-            .BindConfiguration("")
-            .Validate(settings => (!production || settings.AllowedOrigins.Length > 0) &&
-                settings.AllowedOrigins.All(origin => IsValidOrigin(origin, production)),
-                "AllowedOrigins must contain valid site origins without paths.")
-            .ValidateOnStart();
+        builder.Services.AddOptions<Database>().BindConfiguration("ConnectionStrings");
+        builder.Services.AddOptions<AppSettings>().BindConfiguration("");
 
         builder.Services.AddCors();
         builder.Services.AddOptions<CorsOptions>().Configure<IOptions<AppSettings>>((options, settings) =>
@@ -58,26 +47,5 @@ public static class HostBuilderWeb
         services.AddScoped<ISpotImportRepository, SpotImportRepository>();
         services.AddHttpClient<ITreelazySource, TreelazySource>(client =>
             client.Timeout = TimeSpan.FromSeconds(90));
-    }
-
-    private static bool IsValidOrigin(string origin, bool production) =>
-        Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == "https" || (!production && uri.Scheme == "http")) &&
-        string.IsNullOrEmpty(uri.UserInfo) &&
-        uri.GetLeftPart(UriPartial.Authority) == origin;
-
-    private static bool IsValidConnectionString(string value)
-    {
-        try
-        {
-            var connection = new NpgsqlConnectionStringBuilder(value);
-            return !string.IsNullOrWhiteSpace(connection.Host) &&
-                   !string.IsNullOrWhiteSpace(connection.Database) &&
-                   !string.IsNullOrWhiteSpace(connection.Username);
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
     }
 }

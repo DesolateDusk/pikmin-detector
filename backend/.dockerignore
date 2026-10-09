@@ -1,9 +1,7 @@
-# API source and fixtures are needed by the backend build and Linux test stages.
+# Only API source is needed to build the deployment image.
 **
 !PikminDetector.Api/
 !PikminDetector.Api/**
-!PikminDetector.Api.Tests/
-!PikminDetector.Api.Tests/**
 **/bin/
 **/obj/
 **/logs/
@@ -11,3 +9,8 @@
 **/.env.*
 **/secrets.json
 **/appsettings*.json
+**/tessdata/
+**/Properties/
+**/Dockerfile
+**/*Tests.cs
+**/TestData/
